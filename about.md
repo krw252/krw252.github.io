@@ -1,10 +1,8 @@
 ---
 layout: page
-title: About
+title: Bio
 permalink: /about/
 ---
-
-Some information about you!
 
 ### Bio
 
