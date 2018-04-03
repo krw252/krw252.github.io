@@ -3,11 +3,11 @@ layout: post
 title: Classifacoustics
 ---
 
-If there is one thing I look forward to on a Monday, its got to be my morning commute.  Nothing better than waking up early to pack myself into a just-too-warm-and-somehow-humid train for an hour. Well maybe not, but it is usually the first time I listen to my new Spotify *Discover Weekly* playlist and boy, it never fails me.  
+If there is one thing I look forward to on a Monday, it must be the morning commute.  Nothing beats a just-too-warm-and-somehow-humid hour long train ride. Well maybe not, but it is usually the first chance I get to listen to my new Spotify *Discover Weekly* playlist and boy, it never fails me.  
 
 Being someone who listens to a *very* wide range of genres, I am wholly impressed in how Spotify's recommendation engines are so good at picking up nuances in my recent music tastes. It feels like I have a soundtrack curated for me for the week ahead.  And its not like its just throwing me tracks or artists I already listen to, its providing me with actually providing unearthing discoveries.  Neat.
 
-I wanted to learn more about this wizardry.  I knew Spotify had a very detailed set of [genres](http://everynoise.com/engenremap.html) but how?  What does the acoustic data from [Echo Nest](https://techcrunch.com/2014/03/06/spotify-acquires-the-echo-nest/) look like?  And most importantly, could I build something like this myself with machine learning classification (supervised) and clustering (unsupervised) techniques?  We'll see...
+I wanted to learn more.  I knew Spotify had a very detailed set of [genres](http://everynoise.com/engenremap.html) but how?  What does the acoustic data from [Echo Nest](https://techcrunch.com/2014/03/06/spotify-acquires-the-echo-nest/) look like?  And most importantly, could I build a simple recommender myself?
 
 ##### Sifting through the Raw Raw
 To get my dataset, I leveraged Spotify Web API through a nice little Python library called [Spotipy](https://github.com/plamere/spotipy).  They have excellent documentation, I'd recommend checking it out.  The first thing you have to do is [get your project authenticated.](https://developer.spotify.com/web-api/authorization-guide/)  Once setup, you can pull a ton of [information from Spotify](http://spotipy.readthedocs.io/en/latest/#api-reference).  For the purposes of this project, I wanted to look at all raw acoustic features as well as some track metadata to get an idea of how the raw features might affect song popularity.  To do so, I wanted to pull a random set of songs across a range of pre-defined genres.  I went with broad genres with as much musical variety as possible - after testing a few sets I went with these:
@@ -71,4 +71,6 @@ def get_all(n,off,list_of_genres):
     df = pd.merge(df_meta, df_feat, on='tid', how='left')
     return df
 ```
+Here is a distribution of the genres from my pull.  You can see there it is quite uneven, which is fine when we build out our recommender later on but will need to be resampled for any supervised learning.
+
 ![distribution]({{ site.url }}/images/distribution.jpg)
