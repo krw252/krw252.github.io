@@ -71,3 +71,4 @@ def get_all(n,off,list_of_genres):
     df = pd.merge(df_meta, df_feat, on='tid', how='left')
     return df
 ```
+![distribution]({{ site.url }}/images/distribution.jpg)
