@@ -57,4 +57,4 @@ For my final feature set, I chose the below after iterating through a few variat
 |precision| 0.29|
 |recall| 0.30|
 
-![confustion_matrix]({{site.url}}/images/rf_cm.jpg)
+![confusion_matrix]({{site.url}}/images/rf_cm.jpg)
