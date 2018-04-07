@@ -1,76 +1,59 @@
 ---
 layout: post
-title: Classifacoustics
+title: **Classifacoustics**
 ---
-
 If there is one thing I look forward to on a Monday, it must be the morning commute.  Nothing beats a just-too-warm-and-somehow-humid hour long train ride. Well maybe not, but it is usually the first chance I get to listen to my new Spotify *Discover Weekly* playlist and boy, it never fails me.  
 
 Being someone who listens to a *very* wide range of genres, I am wholly impressed in how Spotify's recommendation engines are so good at picking up nuances in my recent music tastes. It feels like I have a soundtrack curated for me for the week ahead.  And its not like its just throwing me tracks or artists I already listen to, its providing me with actually providing unearthing discoveries.  Neat.
 
-I wanted to learn more.  I knew Spotify had a very detailed set of [genres](http://everynoise.com/engenremap.html) but how?  What does the acoustic data from [Echo Nest](https://techcrunch.com/2014/03/06/spotify-acquires-the-echo-nest/) look like?  And most importantly, could I build a simple recommender myself?
+I wanted to learn more.  I knew Spotify had a very detailed set of [genres](http://everynoise.com/engenremap.html) but how are these labeled?  And more importantly, could I build a simple recommender myself?  To do so I decided to use the [Echo Nest](https://techcrunch.com/2014/03/06/spotify-acquires-the-echo-nest/) acoustic data to:
+
+1. Run a tree based classifier to label track genres and...
+
+2. Build a simple distance based recommendation engine.
 
 ##### Sifting through the Raw Raw
-To get my dataset, I leveraged Spotify Web API through a nice little Python library called [Spotipy](https://github.com/plamere/spotipy).  They have excellent documentation, I'd recommend checking it out.  The first thing you have to do is [get your project authenticated.](https://developer.spotify.com/web-api/authorization-guide/)  Once setup, you can pull a ton of [information from Spotify](http://spotipy.readthedocs.io/en/latest/#api-reference).  For the purposes of this project, I wanted to look at all raw acoustic features as well as some track metadata to get an idea of how the raw features might affect song popularity.  To do so, I wanted to pull a random set of songs across a range of pre-defined genres.  I went with broad genres with as much musical variety as possible - after testing a few sets I went with these:
+To get my dataset, I leveraged Spotify Web API through a nice little Python library called [Spotipy](https://github.com/plamere/spotipy).  They have excellent documentation, I'd recommend checking it out.  The first thing you have to do is [get your project authenticated.](https://developer.spotify.com/web-api/authorization-guide/)  Once setup, you can pull a ton of [information from Spotify](http://spotipy.readthedocs.io/en/latest/#api-reference).  For this analysis, I extracted track metadata (title, artist, duration, genre from search term) and acoustic features for over 30k tracks.  As you can see from the distribution below, the genres are pretty uneven.  This is fine when we make our recommender system later but will need to be resampled for our classification task.
 
+![distribution]({{site.url}}/images/distribution.jpg)
+
+Here is a snippet of code to upsample each genre to 2,000 records each.  You can see the final feature set I settled on after iterating through a few sets:
 ```python
-genres_narrow = ['blues','classical','country','techno', 'trance', 'house',
-                 'folk','jazz','ambient','reggae','rock', 'punk', 'metal',
-                 'hip hop', 'soundtrack', 'holiday', 'acoustic', 'rnb',
-                'funk','disney', 'pop']
-```
-
-Finally, I built out some functions to pull the metadata and acoustic features I wanted.  As these two searches were pulled separately, I had to join my dataframes after by searching for track-id's.  Note how I randomized my dataset by creating a random offset for each iteration of my search. Below is an example of the code I used:
-
-```python
-# n is the number of searches per genre - grabs 50 songs per search
-# keep n reasonable for rate-limiting purposes
-# offset randomizes your sample, off is an int between 0-100000
-def get_all(n,off,list_of_genres):
-    # helper function to get meta data
-    def get_meta(name,off):
-        # max limit is 50
-        results = sp.search(q=name,limit=50,offset=off)
-        temp = defaultdict(list)
-        for t in results['tracks']['items']:
-            temp['track'].append(t['name'])
-            temp['tid'].append(t['id'])
-            temp['artist'].append(t['artists'][0]['name'])
-            temp['aid'].append(t['artists'][0]['id'])
-            temp['tpopularity'].append(t['popularity'])
-            temp['explicit'].append(t['explicit'])
-            temp['duration_min'].append(round(t['duration_ms']/1000/60,2))
-            temp['search_term'].append(name)
-        df = pd.DataFrame(temp)
-        return df
-
-    # helper function to get acoustic features
-    def get_features(trackID):
-        features = sp.audio_features(trackID)
-        temp = defaultdict(list)
-        for song in features:
-            for k, v in song.items():
-                temp[k].append(v)
-        df = pd.DataFrame(temp)
-        df.rename(columns={'id': 'tid'}, inplace=True)
-        df.drop(['analysis_url','track_href','type','uri'], axis=1, inplace=True)
-        return df
-
-    # pull meta data
-    df_meta = pd.DataFrame(columns=['aid', 'artist', 'duration_min', 'explicit',
-                           'search_term', 'tid', 'tpopularity', 'track'])
-    for genre in list_of_genres:
-        for i in range(0,n):
-            offset = random.randint(0,off)
-            df_temp = get_meta(genre, offset)
-            df_meta = pd.concat([df_meta,df_temp])
-    df_meta.drop_duplicates(inplace=True)
-    tid = df_meta['tid']
-    # pull acoustic features
-    df_feat = get_features(tid)
-    # join on track id
-    df = pd.merge(df_meta, df_feat, on='tid', how='left')
+def upsample(n,categories):
+    df = pd.DataFrame(columns=['acousticness', 'danceability', 'energy', 'instrumentalness',
+                                'key','liveness', 'loudness', 'speechiness', 'tempo',
+                                'time_signature', 'valence', 'duration_min', 'explicit',
+                                'mode', 'tid', 'aid', 'artist','track', 'genre', 'pop'])
+    for cat in categories:
+        c = train_df[train_df['genre'] == cat]
+        if len(c) < n:
+            temp = resample(c, replace=True, n_samples=(n), random_state=123)
+            df = pd.concat([df,temp])
+        elif len(c) > (n * 1.1):
+            temp = resample(c, replace=False, n_samples=(n), random_state=123)
+            df = pd.concat([df,temp])
+        else:
+            df = pd.concat([df,c])
     return df
 ```
-Here is a distribution of the genres from my pull.  You can see there it is quite uneven, which is fine when we build out our recommender later on but will need to be resampled for any supervised learning.
 
-![distribution]({{ site.url }}/images/distribution.jpg)
+Now that we have even samples, let's see if we how accurately we can classify these tracks based on their acoustic features.  Something to be wary of at this juncture is scale and normalization, particularly if you are using something like an SVM or K-means with a Euclidean distance function.  Since We are leveraging a Random Forest below we don't need to worry about this.
+
+For my final feature set, I chose the below after iterating through a few variations.
+
+```python
+['acousticness', 'danceability', 'energy',
+ 'instrumentalness', 'key', 'liveness', 'loudness',
+  'speechiness', 'tempo', 'time_signature',
+  'valence', 'duration_min', 'explicit', 'mode', 'tid',
+  'aid', 'artist', 'track', 'genre', 'pop']
+```
+##### Random forest
+
+|metric|result|
+|------|------|
+|accuracy| 0.31|
+|precision| 0.29|
+|recall| 0.30|
+
+![distribution]({{site.url}}/images/rf_cm.jpg)
