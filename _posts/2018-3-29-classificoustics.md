@@ -2,6 +2,7 @@
 layout: post
 title: **Classifacoustics**
 ---
+
 If there is one thing I look forward to on a Monday, it must be the morning commute.  Nothing beats a just-too-warm-and-somehow-humid hour long train ride. Well maybe not, but it is usually the first chance I get to listen to my new Spotify *Discover Weekly* playlist and boy, it never fails me.  
 
 Being someone who listens to a *very* wide range of genres, I am wholly impressed in how Spotify's recommendation engines are so good at picking up nuances in my recent music tastes. It feels like I have a soundtrack curated for me for the week ahead.  And its not like its just throwing me tracks or artists I already listen to, its providing me with actually providing unearthing discoveries.  Neat.
@@ -56,4 +57,4 @@ For my final feature set, I chose the below after iterating through a few variat
 |precision| 0.29|
 |recall| 0.30|
 
-![distribution]({{site.url}}/images/rf_cm.jpg)
+![confustion_matrix]({{site.url}}/images/rf_cm.jpg)
