@@ -1,6 +1,6 @@
 ---
 layout: post
-title: **Classifacoustics**
+title: Classifacoustics
 ---
 
 If there is one thing I look forward to on a Monday, it must be the morning commute.  Nothing beats a just-too-warm-and-somehow-humid hour long train ride. Well maybe not, but it is usually the first chance I get to listen to my new Spotify *Discover Weekly* playlist and boy, it never fails me.  
